@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { GENRES, MOODS, MOVIES, recommend, type Movie } from "@/data/movies";
 
 export const Route = createFileRoute("/")({
@@ -31,6 +31,26 @@ function Index() {
   const [moods, setMoods] = useState<string[]>([]);
   const [era, setEra] = useState("any");
   const [results, setResults] = useState<Movie[] | null>(null);
+  const [resultKey, setResultKey] = useState(0);
+  const [saved, setSaved] = useState<string[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem("flickpick-saved") ?? "[]");
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem("flickpick-saved", JSON.stringify(saved));
+  }, [saved]);
+
+  const toggleSave = (title: string) => setSaved((s) => toggle(s, title));
+
+  function handleSurprise() {
+    const shuffled = [...MOVIES].sort(() => Math.random() - 0.5).slice(0, 6);
+    setResults(shuffled);
+    setResultKey((k) => k + 1);
+  }
 
   const canSubmit = genres.length > 0;
 
@@ -40,6 +60,7 @@ function Index() {
     } else {
       setResults(recommend(genres, moods, era));
     }
+    setResultKey((k) => k + 1);
   }
 
   function handleReset() {
