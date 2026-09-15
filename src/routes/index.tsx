@@ -165,6 +165,7 @@ function Index() {
             {results.length === 0 ? (
               <p className="text-muted-foreground">No matches found — try picking different genres.</p>
             ) : (
+              <>
               <ol className="space-y-4" key={resultKey}>
                 {results.map((m, i) => {
                   const isSaved = saved.includes(m.title);
@@ -207,6 +208,7 @@ function Index() {
                   ❤️ {saved.length} movie{saved.length > 1 ? "s" : ""} in your watchlist (saved on this device)
                 </p>
               )}
+              </>
             )}
           </section>
         )}
