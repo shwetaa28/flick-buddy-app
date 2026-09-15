@@ -134,18 +134,24 @@ function Index() {
             </div>
           </div>
 
-          <div className="flex gap-3 pt-2">
+          <div className="flex flex-wrap gap-3 pt-2">
             <button
               onClick={handleRecommend}
               disabled={!canSubmit}
-              className="rounded-md bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-40"
+              className="cursor-pointer rounded-md bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-md active:translate-y-0 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 disabled:hover:shadow-none"
             >
               Recommend movies
+            </button>
+            <button
+              onClick={handleSurprise}
+              className="cursor-pointer rounded-md border border-input px-6 py-2.5 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 hover:bg-accent hover:shadow-md active:translate-y-0 active:scale-[0.98]"
+            >
+              🎲 Surprise me
             </button>
             {results && (
               <button
                 onClick={handleReset}
-                className="rounded-md border border-input px-6 py-2.5 text-sm font-medium transition-colors hover:bg-accent"
+                className="cursor-pointer rounded-md border border-input px-6 py-2.5 text-sm font-medium transition-colors hover:bg-accent"
               >
                 Start over
               </button>
@@ -159,27 +165,48 @@ function Index() {
             {results.length === 0 ? (
               <p className="text-muted-foreground">No matches found — try picking different genres.</p>
             ) : (
-              <ol className="space-y-4">
-                {results.map((m, i) => (
-                  <li key={m.title} className="rounded-lg border border-border bg-card p-5">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <p className="font-semibold">
-                          <span className="mr-2 text-muted-foreground">{i + 1}.</span>
-                          {m.title} <span className="font-normal text-muted-foreground">({m.year})</span>
-                        </p>
-                        <p className="mt-1 text-sm text-muted-foreground">
-                          {m.genres.join(", ")} · {m.duration}
-                        </p>
+              <ol className="space-y-4" key={resultKey}>
+                {results.map((m, i) => {
+                  const isSaved = saved.includes(m.title);
+                  return (
+                    <li
+                      key={m.title}
+                      className="animate-result-in rounded-lg border border-border bg-card p-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+                      style={{ animationDelay: `${i * 90}ms` }}
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <p className="font-semibold">
+                            <span className="mr-2 text-muted-foreground">{i + 1}.</span>
+                            {m.title} <span className="font-normal text-muted-foreground">({m.year})</span>
+                          </p>
+                          <p className="mt-1 text-sm text-muted-foreground">
+                            {m.genres.join(", ")} · {m.duration}
+                          </p>
+                        </div>
+                        <div className="flex shrink-0 items-center gap-2">
+                          <span className="rounded-md bg-secondary px-2 py-1 text-xs font-semibold text-secondary-foreground">
+                            ★ {m.rating.toFixed(1)}
+                          </span>
+                          <button
+                            onClick={() => toggleSave(m.title)}
+                            aria-label={isSaved ? "Remove from watchlist" : "Save to watchlist"}
+                            className="cursor-pointer text-lg transition-transform duration-200 hover:scale-125 active:scale-95"
+                          >
+                            {isSaved ? "❤️" : "🤍"}
+                          </button>
+                        </div>
                       </div>
-                      <span className="shrink-0 rounded-md bg-secondary px-2 py-1 text-xs font-semibold text-secondary-foreground">
-                        ★ {m.rating.toFixed(1)}
-                      </span>
-                    </div>
-                    <p className="mt-3 text-sm leading-relaxed text-card-foreground/80">{m.plot}</p>
-                  </li>
-                ))}
+                      <p className="mt-3 text-sm leading-relaxed text-card-foreground/80">{m.plot}</p>
+                    </li>
+                  );
+                })}
               </ol>
+              {saved.length > 0 && (
+                <p className="mt-5 text-sm text-muted-foreground">
+                  ❤️ {saved.length} movie{saved.length > 1 ? "s" : ""} in your watchlist (saved on this device)
+                </p>
+              )}
             )}
           </section>
         )}
