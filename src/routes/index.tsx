@@ -70,6 +70,11 @@ function Index() {
     setResults(null);
   }
 
+  const chipBase =
+    "rounded-full border px-4 py-1.5 text-sm transition-all duration-200 active:scale-95 cursor-pointer";
+  const chipOn = `${chipBase} border-transparent bg-primary font-medium text-primary-foreground shadow-sm`;
+  const chipOff = `${chipBase} border-input bg-card text-foreground hover:-translate-y-0.5 hover:border-primary/50 hover:bg-accent hover:shadow-sm`;
+
   return (
     <main className="min-h-screen bg-background">
       <div className="mx-auto max-w-2xl px-5 py-14 sm:py-20">
@@ -91,11 +96,7 @@ function Index() {
                 <button
                   key={g}
                   onClick={() => setGenres(toggle(genres, g))}
-                  className={
-                    genres.includes(g)
-                      ? "rounded-full bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground transition-colors"
-                      : "rounded-full border border-input bg-card px-4 py-1.5 text-sm text-foreground transition-colors hover:bg-accent"
-                  }
+                  className={genres.includes(g) ? chipOn : chipOff}
                 >
                   {g}
                 </button>
@@ -110,11 +111,7 @@ function Index() {
                 <button
                   key={m}
                   onClick={() => setMoods(toggle(moods, m))}
-                  className={
-                    moods.includes(m)
-                      ? "rounded-full bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground transition-colors"
-                      : "rounded-full border border-input bg-card px-4 py-1.5 text-sm text-foreground transition-colors hover:bg-accent"
-                  }
+                  className={moods.includes(m) ? chipOn : chipOff}
                 >
                   {m}
                 </button>
@@ -129,11 +126,7 @@ function Index() {
                 <button
                   key={e.id}
                   onClick={() => setEra(e.id)}
-                  className={
-                    era === e.id
-                      ? "rounded-full bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground transition-colors"
-                      : "rounded-full border border-input bg-card px-4 py-1.5 text-sm text-foreground transition-colors hover:bg-accent"
-                  }
+                  className={era === e.id ? chipOn : chipOff}
                 >
                   {e.label}
                 </button>
