@@ -1,14 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { Clapperboard, Heart, RotateCcw, Shuffle, Sparkles, Star } from "lucide-react";
 import { useEffect, useState } from "react";
+import cinemaCollage from "@/assets/cinema-collage.jpg";
+import { Button } from "@/components/ui/button";
 import { GENRES, MOODS, MOVIES, recommend, type Movie } from "@/data/movies";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "FlickPick — Movie Recommendation Engine" },
-      { name: "description", content: "Tell us what you like — genres, mood, era — and FlickPick recommends movies worth your time." },
-      { property: "og:title", content: "FlickPick — Movie Recommendation Engine" },
-      { property: "og:description", content: "Pick your genres and mood, get movies you'll actually enjoy." },
+      { title: "FlickPick — Find Your Next Movie" },
+      { name: "description", content: "Choose your genres, mood, and era to get instant movie recommendations from FlickPick." },
+      { property: "og:title", content: "FlickPick — Find Your Next Movie" },
+      { property: "og:description", content: "A colorful, simple movie recommendation engine based on what you enjoy." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -19,11 +22,16 @@ export const Route = createFileRoute("/")({
 const ERAS = [
   { id: "any", label: "Any era" },
   { id: "classic", label: "Before 2000" },
-  { id: "modern", label: "2000 and later" },
+  { id: "modern", label: "2000 onwards" },
 ];
 
+const MOOD_ICONS: Record<string, string> = {
+  Uplifting: "☀️", Intense: "⚡", Thoughtful: "💭", Emotional: "💙",
+  Thrilling: "🔥", "Mind-bending": "🌀", "Light-hearted": "🌈", Whimsical: "✨",
+};
+
 function toggle(list: string[], item: string) {
-  return list.includes(item) ? list.filter((x) => x !== item) : [...list, item];
+  return list.includes(item) ? list.filter((value) => value !== item) : [...list, item];
 }
 
 function Index() {
@@ -32,35 +40,37 @@ function Index() {
   const [era, setEra] = useState("any");
   const [results, setResults] = useState<Movie[] | null>(null);
   const [resultKey, setResultKey] = useState(0);
-  const [saved, setSaved] = useState<string[]>(() => {
+  const [saved, setSaved] = useState<string[]>([]);
+
+  useEffect(() => {
     try {
-      return JSON.parse(localStorage.getItem("flickpick-saved") ?? "[]");
+      setSaved(JSON.parse(localStorage.getItem("flickpick-saved") ?? "[]"));
     } catch {
-      return [];
+      setSaved([]);
     }
-  });
+  }, []);
 
   useEffect(() => {
     localStorage.setItem("flickpick-saved", JSON.stringify(saved));
   }, [saved]);
 
-  const toggleSave = (title: string) => setSaved((s) => toggle(s, title));
+  const toggleSave = (title: string) => setSaved((current) => toggle(current, title));
 
-  function handleSurprise() {
-    const shuffled = [...MOVIES].sort(() => Math.random() - 0.5).slice(0, 6);
-    setResults(shuffled);
-    setResultKey((k) => k + 1);
+  function showResults(next: Movie[]) {
+    setResults(next);
+    setResultKey((key) => key + 1);
+    window.setTimeout(() => document.getElementById("recommendations")?.scrollIntoView({ behavior: "smooth" }), 80);
   }
 
-  const canSubmit = genres.length > 0;
+  function handleSurprise() {
+    showResults([...MOVIES].sort(() => Math.random() - 0.5).slice(0, 6));
+  }
 
   function handleRecommend() {
-    if (genres.length === 0 && moods.length === 0) {
-      setResults(MOVIES.slice().sort((a, b) => b.rating - a.rating).slice(0, 6));
-    } else {
-      setResults(recommend(genres, moods, era));
-    }
-    setResultKey((k) => k + 1);
+    const next = genres.length === 0 && moods.length === 0
+      ? [...MOVIES].sort((a, b) => b.rating - a.rating).slice(0, 6)
+      : recommend(genres, moods, era);
+    showResults(next);
   }
 
   function handleReset() {
@@ -68,153 +78,168 @@ function Index() {
     setMoods([]);
     setEra("any");
     setResults(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  const chipBase =
-    "rounded-full border px-4 py-1.5 text-sm transition-all duration-200 active:scale-95 cursor-pointer";
-  const chipOn = `${chipBase} border-transparent bg-primary font-medium text-primary-foreground shadow-sm`;
-  const chipOff = `${chipBase} border-input bg-card text-foreground hover:-translate-y-0.5 hover:border-primary/50 hover:bg-accent hover:shadow-sm`;
+  const selectionCount = genres.length + moods.length + (era === "any" ? 0 : 1);
 
   return (
-    <main className="min-h-screen bg-background">
-      <div className="mx-auto max-w-2xl px-5 py-14 sm:py-20">
-        <header className="mb-10">
-          <p className="text-sm font-medium tracking-widest text-primary uppercase">FlickPick</p>
-          <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
-            What should you watch tonight?
-          </h1>
-          <p className="mt-3 text-muted-foreground">
-            Pick a few things you like and we'll recommend movies from our collection of {MOVIES.length} hand-picked titles.
-          </p>
+    <main className="min-h-screen bg-background text-foreground">
+      <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 sm:py-8 lg:px-8">
+        <header className="mb-5 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="flex size-11 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-prism">
+              <Clapperboard className="size-5" aria-hidden="true" />
+            </span>
+            <div>
+              <p className="font-display text-3xl leading-none text-primary">FLICKPICK</p>
+              <p className="text-xs font-semibold text-muted-foreground">Find your next favorite</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 rounded-full border border-border bg-card px-3 py-2 text-sm font-semibold shadow-soft">
+            <Heart className="size-4 fill-coral text-coral" aria-hidden="true" />
+            <span>{saved.length}</span><span className="hidden text-muted-foreground sm:inline">saved</span>
+          </div>
         </header>
 
-        <section className="space-y-8">
-          <div>
-            <h2 className="mb-3 text-sm font-semibold">1. Favorite genres</h2>
-            <div className="flex flex-wrap gap-2">
-              {GENRES.map((g) => (
-                <button
-                  key={g}
-                  onClick={() => setGenres(toggle(genres, g))}
-                  className={genres.includes(g) ? chipOn : chipOff}
-                >
-                  {g}
-                </button>
-              ))}
+        <section className="grid gap-4 lg:grid-cols-12" aria-labelledby="page-title">
+          <div className="relative min-h-72 overflow-hidden rounded-3xl lg:col-span-7 lg:min-h-96">
+            <img src={cinemaCollage} alt="Film reels and colorful cinematic scenes" width={1440} height={700} className="absolute inset-0 size-full object-cover" />
+            <div className="absolute inset-x-0 bottom-0 bg-hero-wash p-6 pt-24 sm:p-8 sm:pt-32">
+              <span className="mb-3 inline-flex items-center gap-2 rounded-full bg-card/90 px-3 py-1.5 text-xs font-bold uppercase text-primary shadow-soft">
+                <Sparkles className="size-3.5 text-coral" aria-hidden="true" /> Tonight’s watch
+              </span>
+              <h1 id="page-title" className="font-display max-w-2xl text-5xl leading-[0.9] text-primary sm:text-7xl">
+                WHAT SHOULD YOU WATCH?
+              </h1>
+              <p className="mt-3 max-w-lg text-sm font-medium text-foreground/75 sm:text-base">
+                Pick what feels right. We’ll score {MOVIES.length} hand-picked movies and find your strongest matches.
+              </p>
             </div>
           </div>
 
-          <div>
-            <h2 className="mb-3 text-sm font-semibold">2. What mood are you in? <span className="font-normal text-muted-foreground">(optional)</span></h2>
-            <div className="flex flex-wrap gap-2">
-              {MOODS.map((m) => (
-                <button
-                  key={m}
-                  onClick={() => setMoods(toggle(moods, m))}
-                  className={moods.includes(m) ? chipOn : chipOff}
-                >
-                  {m}
-                </button>
-              ))}
+          <div className="rounded-3xl bg-primary p-6 text-primary-foreground shadow-prism lg:col-span-5 sm:p-8">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-bold uppercase text-primary-foreground/70">Quick match</p>
+                <h2 className="font-display mt-1 text-4xl leading-none">YOUR MOVIE MIX</h2>
+              </div>
+              <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-primary-foreground/15 font-display text-3xl">
+                {selectionCount}
+              </div>
+            </div>
+            <p className="mt-4 max-w-sm text-sm leading-relaxed text-primary-foreground/75">
+              Choose at least one genre, then add a mood and era to sharpen the results.
+            </p>
+            <div className="mt-7 grid grid-cols-3 gap-2 text-center text-xs font-bold">
+              <div className="rounded-2xl bg-primary-foreground/10 p-3"><span className="block font-display text-2xl">{genres.length}</span>Genres</div>
+              <div className="rounded-2xl bg-primary-foreground/10 p-3"><span className="block font-display text-2xl">{moods.length}</span>Moods</div>
+              <div className="rounded-2xl bg-primary-foreground/10 p-3"><span className="block font-display text-2xl">{era === "any" ? "All" : "1"}</span>Era</div>
+            </div>
+            <Button onClick={handleSurprise} variant="secondary" className="mt-5 h-12 w-full rounded-2xl font-bold active:scale-[0.98]">
+              <Shuffle aria-hidden="true" /> Surprise me
+            </Button>
+          </div>
+
+          <div className="rounded-3xl border border-border bg-card p-5 shadow-soft lg:col-span-7 sm:p-7">
+            <div className="mb-5 flex items-end justify-between gap-4">
+              <div><p className="step-label">Step 01</p><h2 className="font-display text-3xl text-primary">PICK YOUR GENRES</h2></div>
+              <span className="text-xs font-semibold text-muted-foreground">Choose one or more</span>
+            </div>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+              {GENRES.map((genre) => {
+                const active = genres.includes(genre);
+                return (
+                  <Button key={genre} variant={active ? "default" : "outline"} aria-pressed={active} onClick={() => setGenres(toggle(genres, genre))}
+                    className="h-12 rounded-2xl font-bold transition-all hover:-translate-y-0.5 active:translate-y-0">
+                    {genre}
+                  </Button>
+                );
+              })}
             </div>
           </div>
 
-          <div>
-            <h2 className="mb-3 text-sm font-semibold">3. Era</h2>
-            <div className="flex flex-wrap gap-2">
-              {ERAS.map((e) => (
-                <button
-                  key={e.id}
-                  onClick={() => setEra(e.id)}
-                  className={era === e.id ? chipOn : chipOff}
-                >
-                  {e.label}
-                </button>
-              ))}
+          <div className="rounded-3xl bg-aqua p-5 text-aqua-foreground shadow-soft lg:col-span-5 sm:p-7">
+            <p className="text-xs font-bold uppercase text-aqua-foreground/60">Step 03</p>
+            <h2 className="font-display text-3xl">CHOOSE AN ERA</h2>
+            <div className="mt-5 grid gap-2">
+              {ERAS.map((option) => {
+                const active = era === option.id;
+                return (
+                  <Button key={option.id} variant="ghost" aria-pressed={active} onClick={() => setEra(option.id)}
+                    className={`h-12 justify-between rounded-2xl px-4 font-bold ${active ? "bg-card text-primary shadow-soft hover:bg-card" : "text-aqua-foreground hover:bg-card/40"}`}>
+                    {option.label}<span className={`size-3 rounded-full border-2 ${active ? "border-primary bg-primary" : "border-aqua-foreground/35"}`} />
+                  </Button>
+                );
+              })}
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-3 pt-2">
-            <button
-              onClick={handleRecommend}
-              disabled={!canSubmit}
-              className="cursor-pointer rounded-md bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-md active:translate-y-0 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 disabled:hover:shadow-none"
-            >
-              Recommend movies
-            </button>
-            <button
-              onClick={handleSurprise}
-              className="cursor-pointer rounded-md border border-input px-6 py-2.5 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 hover:bg-accent hover:shadow-md active:translate-y-0 active:scale-[0.98]"
-            >
-              🎲 Surprise me
-            </button>
-            {results && (
-              <button
-                onClick={handleReset}
-                className="cursor-pointer rounded-md border border-input px-6 py-2.5 text-sm font-medium transition-colors hover:bg-accent"
-              >
-                Start over
-              </button>
-            )}
+          <div className="rounded-3xl bg-mist p-5 lg:col-span-8 sm:p-7">
+            <div className="mb-5"><p className="step-label">Step 02</p><h2 className="font-display text-3xl text-primary">MATCH YOUR MOOD</h2></div>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {MOODS.map((mood) => {
+                const active = moods.includes(mood);
+                return (
+                  <Button key={mood} variant="ghost" aria-pressed={active} onClick={() => setMoods(toggle(moods, mood))}
+                    className={`h-auto min-h-20 flex-col items-start rounded-2xl p-3 text-left transition-all hover:-translate-y-0.5 ${active ? "bg-primary text-primary-foreground shadow-prism hover:bg-primary" : "bg-card text-foreground shadow-soft hover:bg-card"}`}>
+                    <span className="text-xl" aria-hidden="true">{MOOD_ICONS[mood]}</span><span className="whitespace-normal font-bold leading-tight">{mood}</span>
+                  </Button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="flex flex-col justify-between rounded-3xl bg-coral p-6 text-coral-foreground shadow-prism lg:col-span-4 sm:p-8">
+            <div>
+              <Sparkles className="size-8" aria-hidden="true" />
+              <h2 className="font-display mt-4 text-4xl leading-none">READY FOR YOUR LINEUP?</h2>
+              <p className="mt-3 text-sm font-semibold text-coral-foreground/75">Your choices create a simple match score—no AI, no mystery.</p>
+            </div>
+            <Button onClick={handleRecommend} disabled={genres.length === 0} className="mt-7 h-14 rounded-2xl bg-card text-primary shadow-soft hover:bg-card/90 active:scale-[0.98]">
+              <Clapperboard aria-hidden="true" /> Recommend movies
+            </Button>
           </div>
         </section>
 
         {results && (
-          <section className="mt-14">
-            <h2 className="mb-5 text-xl font-bold tracking-tight">Your recommendations</h2>
+          <section id="recommendations" className="scroll-mt-6 py-14" aria-live="polite">
+            <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+              <div><p className="step-label">Fresh picks</p><h2 className="font-display text-5xl text-primary">YOUR RECOMMENDATIONS</h2></div>
+              <Button onClick={handleReset} variant="outline" className="h-10 rounded-xl"><RotateCcw aria-hidden="true" /> Start over</Button>
+            </div>
             {results.length === 0 ? (
-              <p className="text-muted-foreground">No matches found — try picking different genres.</p>
+              <div className="rounded-3xl bg-mist p-8 text-center font-semibold text-muted-foreground">No close matches—try another genre or mood.</div>
             ) : (
-              <>
-              <ol className="space-y-4" key={resultKey}>
-                {results.map((m, i) => {
-                  const isSaved = saved.includes(m.title);
+              <ol key={resultKey} className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {results.map((movie, index) => {
+                  const isSaved = saved.includes(movie.title);
                   return (
-                    <li
-                      key={m.title}
-                      className="animate-result-in rounded-lg border border-border bg-card p-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
-                      style={{ animationDelay: `${i * 90}ms` }}
-                    >
+                    <li key={movie.title} className="animate-result-in group flex min-h-72 flex-col rounded-3xl border border-border bg-card p-5 shadow-soft transition-all hover:-translate-y-1 hover:shadow-prism" style={{ animationDelay: `${index * 75}ms` }}>
                       <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <p className="font-semibold">
-                            <span className="mr-2 text-muted-foreground">{i + 1}.</span>
-                            {m.title} <span className="font-normal text-muted-foreground">({m.year})</span>
-                          </p>
-                          <p className="mt-1 text-sm text-muted-foreground">
-                            {m.genres.join(", ")} · {m.duration}
-                          </p>
-                        </div>
-                        <div className="flex shrink-0 items-center gap-2">
-                          <span className="rounded-md bg-secondary px-2 py-1 text-xs font-semibold text-secondary-foreground">
-                            ★ {m.rating.toFixed(1)}
-                          </span>
-                          <button
-                            onClick={() => toggleSave(m.title)}
-                            aria-label={isSaved ? "Remove from watchlist" : "Save to watchlist"}
-                            className="cursor-pointer text-lg transition-transform duration-200 hover:scale-125 active:scale-95"
-                          >
-                            {isSaved ? "❤️" : "🤍"}
-                          </button>
-                        </div>
+                        <span className="font-display text-5xl leading-none text-aqua/50">{String(index + 1).padStart(2, "0")}</span>
+                        <Button size="icon" variant="ghost" onClick={() => toggleSave(movie.title)} aria-label={isSaved ? `Remove ${movie.title} from watchlist` : `Save ${movie.title} to watchlist`} className="rounded-full hover:bg-coral-soft">
+                          <Heart className={isSaved ? "fill-coral text-coral" : "text-muted-foreground"} aria-hidden="true" />
+                        </Button>
                       </div>
-                      <p className="mt-3 text-sm leading-relaxed text-card-foreground/80">{m.plot}</p>
+                      <h3 className="font-display mt-4 text-3xl leading-none text-primary">{movie.title}</h3>
+                      <div className="mt-3 flex flex-wrap items-center gap-2 text-xs font-semibold text-muted-foreground">
+                        <span>{movie.year}</span><span>•</span><span>{movie.duration}</span>
+                        <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-gold-soft px-2.5 py-1 text-gold-foreground"><Star className="size-3 fill-current" />{movie.rating.toFixed(1)}</span>
+                      </div>
+                      <div className="mt-4 flex flex-wrap gap-1.5">{movie.genres.map((genre) => <span key={genre} className="rounded-full bg-mist px-2.5 py-1 text-[11px] font-bold text-primary">{genre}</span>)}</div>
+                      <p className="mt-4 text-sm leading-relaxed text-muted-foreground">{movie.plot}</p>
                     </li>
                   );
                 })}
               </ol>
-              {saved.length > 0 && (
-                <p className="mt-5 text-sm text-muted-foreground">
-                  ❤️ {saved.length} movie{saved.length > 1 ? "s" : ""} in your watchlist (saved on this device)
-                </p>
-              )}
-              </>
             )}
           </section>
         )}
 
-        <footer className="mt-16 border-t border-border pt-6 text-xs text-muted-foreground">
-          A simple rule-based recommendation engine — scores each movie by genre match, mood match, era, and rating.
+        <footer className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-border py-7 text-xs font-medium text-muted-foreground">
+          <span>FlickPick · A rule-based movie recommendation engine</span>
+          <span>Genre + mood + era + rating</span>
         </footer>
       </div>
     </main>
